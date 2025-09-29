@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "550005067823",
+    "project_id": "sparkhub-fd482",
+    "storage_bucket": "sparkhub-fd482.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:550005067823:android:50e0454f40d3530b7776da",
+        "android_client_info": {
+          "package_name": "com.example.sparkhub"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwiV_4GR_k-AWipTeOZaMjAszrTdasdnM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

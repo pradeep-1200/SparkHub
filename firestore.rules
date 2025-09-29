@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read/write their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Allow reading other users' basic info for leaderboard
+      allow read: if request.auth != null && resource.data.keys().hasAll(['name', 'points', 'badges']);
+    }
+    
+    // Events rules
+    match /events/{eventId} {
+      // Anyone authenticated can read events
+      allow read: if request.auth != null;
+      
+      // Only admins can create, update, delete events
+      allow create, update, delete: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      
+      // Users can update attendees array to RSVP
+      allow update: if request.auth != null && 
+        request.writeFields.hasAll(['attendees']) &&
+        request.writeFields.size() == 1;
+    }
+    
+    // Badges rules
+    match /badges/{badgeId} {
+      // Anyone authenticated can read badges
+      allow read: if request.auth != null;
+      
+      // Only admins can create, update, delete badges
+      allow create, update, delete: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
