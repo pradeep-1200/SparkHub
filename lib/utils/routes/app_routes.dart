@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/auth/onboarding_screen.dart';
 import '../../screens/events/create_event_screen.dart';
@@ -27,31 +25,6 @@ class AppRoutes {
   static final GoRouter router = GoRouter(
     initialLocation: splash,
     debugLogDiagnostics: true,
-    redirect: (BuildContext context, GoRouterState state) {
-      final authProvider = context.read<AuthProvider>();
-      final isAuthenticated = authProvider.isAuthenticated;
-      final isLoading = authProvider.isLoading;
-
-      final isOnSplash = state.matchedLocation == splash;
-      final isOnAuth = [login, onboarding].contains(state.matchedLocation);
-
-      // Show splash while loading
-      if (isLoading && !isOnSplash) {
-        return splash;
-      }
-
-      // Redirect unauthenticated users to login
-      if (!isAuthenticated && !isOnAuth && !isOnSplash) {
-        return login;
-      }
-
-      // Redirect authenticated users away from auth screens
-      if (isAuthenticated && isOnAuth) {
-        return home;
-      }
-
-      return null; // No redirect needed
-    },
     routes: [
       GoRoute(
         path: splash,
@@ -68,27 +41,20 @@ class AppRoutes {
         name: 'login',
         builder: (context, state) => const LoginScreen(),
       ),
-      ShellRoute(
-        builder: (context, state, child) {
-          return HomeScreen(child: child);
-        },
-        routes: [
-          GoRoute(
-            path: home,
-            name: 'home',
-            builder: (context, state) => Container(), // Will be handled by HomeScreen
-          ),
-          GoRoute(
-            path: profile,
-            name: 'profile',
-            builder: (context, state) => const ProfileScreen(),
-          ),
-          GoRoute(
-            path: notifications,
-            name: 'notifications',
-            builder: (context, state) => const NotificationsScreen(),
-          ),
-        ],
+      GoRoute(
+        path: home,
+        name: 'home',
+        builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: profile,
+        name: 'profile',
+        builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: notifications,
+        name: 'notifications',
+        builder: (context, state) => const NotificationsScreen(),
       ),
       GoRoute(
         path: eventDetails,
@@ -124,34 +90,34 @@ class AppRoutes {
 
   // Navigation helper methods
   static void goToHome(BuildContext context) {
-    context.goNamed('home');
+    context.go(home);
   }
 
   static void goToLogin(BuildContext context) {
-    context.goNamed('login');
+    context.go(login);
   }
 
   static void goToOnboarding(BuildContext context) {
-    context.goNamed('onboarding');
+    context.go(onboarding);
   }
 
   static void goToProfile(BuildContext context) {
-    context.goNamed('profile');
+    context.push(profile);
   }
 
   static void goToNotifications(BuildContext context) {
-    context.goNamed('notifications');
+    context.push(notifications);
   }
 
   static void goToEventDetails(BuildContext context, String eventId) {
-    context.goNamed('eventDetails', pathParameters: {'eventId': eventId});
+    context.push('/event/$eventId');
   }
 
   static void goToCreateEvent(BuildContext context) {
-    context.goNamed('createEvent');
+    context.push(createEvent);
   }
 
   static void goToEditEvent(BuildContext context, String eventId) {
-    context.goNamed('editEvent', pathParameters: {'eventId': eventId});
+    context.push('/edit-event/$eventId');
   }
 }

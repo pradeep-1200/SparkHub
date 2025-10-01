@@ -8,14 +8,13 @@ import '../../utils/constants/colors.dart';
 import '../../utils/constants/text_styles.dart';
 import '../../utils/constants/dimensions.dart';
 import '../../utils/routes/app_routes.dart';
-import '../../widgets/common/gradient_background.dart';
 import 'participant_home.dart';
 import 'admin_home.dart';
+import '../profile/profile_screen.dart';
+import '../notifications/notifications_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  final Widget child;
-
-  const HomeScreen({Key? key, required this.child}) : super(key: key);
+  const HomeScreen({Key? key}) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -23,14 +22,12 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   int _selectedIndex = 0;
-  late PageController _pageController;
   late AnimationController _fabAnimationController;
   late Animation<double> _fabScaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
     _setupAnimations();
     _initializeProviders();
   }
@@ -65,7 +62,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _pageController.dispose();
     _fabAnimationController.dispose();
     super.dispose();
   }
@@ -74,11 +70,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     setState(() {
       _selectedIndex = index;
     });
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
   }
 
   @override
@@ -96,12 +87,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             index: _selectedIndex,
             children: [
               isAdmin ? const AdminHome() : const ParticipantHome(),
-              const ProfileScreenContent(),
-              const NotificationsScreenContent(),
+              const ProfileScreen(),
+              const NotificationsScreen(),
             ],
           ),
           bottomNavigationBar: _buildBottomNavigationBar(isAdmin),
-          floatingActionButton: isAdmin ? _buildAdminFAB() : null,
+          floatingActionButton: isAdmin && _selectedIndex == 0 ? _buildAdminFAB() : null,
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         );
       },
@@ -133,10 +124,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           onDestinationSelected: _onItemTapped,
           backgroundColor: Colors.transparent,
           elevation: 0,
-          height: AppDimensions.bottomNavHeight,
+          height: 70,
           destinations: [
             NavigationDestination(
-              icon: Icon(Icons.home_outlined),
+              icon: const Icon(Icons.home_outlined),
               selectedIcon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -152,7 +143,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               label: 'Home',
             ),
             NavigationDestination(
-              icon: Icon(Icons.person_outline),
+              icon: const Icon(Icons.person_outline),
               selectedIcon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -174,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   return Badge(
                     isLabelVisible: unreadCount > 0,
                     label: Text(unreadCount > 99 ? '99+' : unreadCount.toString()),
-                    child: Icon(Icons.notifications_outlined),
+                    child: const Icon(Icons.notifications_outlined),
                   );
                 },
               ),
@@ -243,24 +234,5 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ),
       ),
     );
-  }
-}
-
-// Placeholder content widgets that will be implemented in next steps
-class ProfileScreenContent extends StatelessWidget {
-  const ProfileScreenContent({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text('Profile Screen - Coming Next'));
-  }
-}
-
-class NotificationsScreenContent extends StatelessWidget {
-  const NotificationsScreenContent({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text('Notifications Screen - Coming Next'));
   }
 }

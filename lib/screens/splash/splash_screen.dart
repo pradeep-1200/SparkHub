@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:lottie/lottie.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/constants/colors.dart';
 import '../../utils/constants/text_styles.dart';
@@ -20,13 +19,11 @@ class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
   late AnimationController _logoController;
   late AnimationController _textController;
-  late AnimationController _fadeController;
   
   late Animation<double> _logoScale;
   late Animation<double> _logoRotation;
   late Animation<Offset> _textSlide;
   late Animation<double> _textOpacity;
-  late Animation<double> _fadeOpacity;
 
   @override
   void initState() {
@@ -79,20 +76,6 @@ class _SplashScreenState extends State<SplashScreen>
       parent: _textController,
       curve: Curves.easeIn,
     ));
-
-    // Fade out animation
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-
-    _fadeOpacity = Tween<double>(
-      begin: 1.0,
-      end: 0.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeInOut,
-    ));
   }
 
   void _startSplashSequence() async {
@@ -105,27 +88,27 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     // Start logo animation
-    await _logoController.forward();
+    _logoController.forward();
     
     // Start text animation with slight delay
-    await Future.delayed(const Duration(milliseconds: 300));
-    await _textController.forward();
+    await Future.delayed(const Duration(milliseconds: 500));
+    _textController.forward();
     
     // Wait and check authentication status
-    await Future.delayed(const Duration(milliseconds: 1500));
-    _checkAuthAndNavigate();
+    await Future.delayed(const Duration(milliseconds: 2000));
+    if (mounted) {
+      _checkAuthAndNavigate();
+    }
   }
 
-  void _checkAuthAndNavigate() async {
+  void _checkAuthAndNavigate() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     
     // Check if user is authenticated
     if (authProvider.isAuthenticated) {
-      await _fadeController.forward();
-      if (mounted) AppRoutes.goToHome(context);
+      AppRoutes.goToHome(context);
     } else {
-      await _fadeController.forward();
-      if (mounted) AppRoutes.goToOnboarding(context);
+      AppRoutes.goToOnboarding(context);
     }
   }
 
@@ -133,40 +116,31 @@ class _SplashScreenState extends State<SplashScreen>
   void dispose() {
     _logoController.dispose();
     _textController.dispose();
-    _fadeController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: AnimatedBuilder(
-        animation: _fadeOpacity,
-        builder: (context, child) {
-          return Opacity(
-            opacity: _fadeOpacity.value,
-            child: GradientBackground(
-              type: GradientType.primary,
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Center(
-                        child: _buildLogo(),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 1,
-                      child: _buildTextContent(),
-                    ),
-                    const SizedBox(height: AppDimensions.spaceXL),
-                  ],
+      body: GradientBackground(
+        type: GradientType.primary,
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                flex: 3,
+                child: Center(
+                  child: _buildLogo(),
                 ),
               ),
-            ),
-          );
-        },
+              Expanded(
+                flex: 1,
+                child: _buildTextContent(),
+              ),
+              const SizedBox(height: AppDimensions.spaceXL),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -178,7 +152,7 @@ class _SplashScreenState extends State<SplashScreen>
         return Transform.scale(
           scale: _logoScale.value,
           child: Transform.rotate(
-            angle: _logoRotation.value * 0.1, // Subtle rotation
+            angle: _logoRotation.value * 0.1,
             child: Container(
               width: 120,
               height: 120,
