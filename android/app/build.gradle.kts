@@ -1,10 +1,7 @@
 plugins {
     id("com.android.application")
-    // START: FlutterFire Configuration
-    id("com.google.gms.google-services")
-    // END: FlutterFire Configuration
+    id("com.google.gms.google-services") // Firebase config
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -25,7 +22,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.sparkhub"
-        minSdk = 23  // ← ADD THIS LINE
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -34,6 +31,8 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }

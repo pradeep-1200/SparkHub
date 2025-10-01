@@ -17,37 +17,44 @@ import 'utils/helpers/error_handler.dart';
 import 'utils/helpers/performance_helper.dart';
 import 'services/notification_service.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
 
-  // Initialize error handling
-  ErrorHandler.initialize();
+  try {
+    // Initialize Firebase
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
 
-  // Initialize notifications
-  await NotificationService().initialize();
+    // Enable Crashlytics
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
 
-  // Configure system UI
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Colors.transparent,
-      systemNavigationBarIconBrightness: Brightness.dark,
-    ),
-  );
+    // Initialize error handling
+    ErrorHandler.initialize();
 
-  // Set preferred orientations
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-  ]);
+    // Initialize notifications
+    await NotificationService().initialize();
 
-  // Performance optimizations
-  PerformanceHelper.optimizeMemory();
+    // System UI setup
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+    );
+
+    // Orientation lock
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
+
+    // Performance optimizations
+    PerformanceHelper.optimizeMemory();
+  } catch (e, st) {
+    debugPrint("🔥 Firebase init error: $e\n$st");
+  }
 
   runApp(const SparkHubApp());
 }
@@ -121,25 +128,22 @@ class ErrorBoundary extends StatelessWidget {
               Text(
                 'Oops! Something went wrong',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
               Text(
                 'We\'re working to fix this issue.\nPlease restart the app.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+                      color: AppColors.textSecondary,
+                    ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
               ElevatedButton(
-                onPressed: () {
-                  // In a real app, you might want to restart or navigate somewhere
-                  SystemNavigator.pop();
-                },
+                onPressed: () => SystemNavigator.pop(),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.white,

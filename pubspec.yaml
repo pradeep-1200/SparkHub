@@ -77,15 +77,14 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/
-    - assets/images/logo/
+    - assets/animations/
+    - assets/images/backgrounds/
+    - assets/images/avatars/
     - assets/images/icons/
     - assets/images/icons/event_icons/
     - assets/images/icons/badge_icons/
     - assets/images/icons/category_icons/
-    - assets/images/avatars/
-    - assets/images/backgrounds/
-    - assets/animations/
+
 
   fonts:
     - family: Poppins
