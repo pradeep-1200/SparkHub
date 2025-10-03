@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/auth/onboarding_screen.dart';
 import '../../screens/events/create_event_screen.dart';
@@ -24,7 +26,53 @@ class AppRoutes {
 
   static final GoRouter router = GoRouter(
     initialLocation: splash,
-    debugLogDiagnostics: true,
+    debugLogDiagnostics: false,
+    redirect: (context, state) {
+      try {
+        final authProvider = context.read<AuthProvider>();
+        final isAuthenticated = authProvider.isAuthenticated;
+        final isInitialized = authProvider.isInitialized;
+        final authStatus = authProvider.status;
+        
+        // Always allow splash screen initially
+        if (state.matchedLocation == splash && !isInitialized) {
+          return null; // Stay on splash
+        }
+        
+        // If not initialized yet, redirect to splash
+        if (!isInitialized) {
+          return splash;
+        }
+        
+        // If authenticated and on splash/auth screens, go to home
+        if (isAuthenticated) {
+          if (state.matchedLocation == splash || 
+              state.matchedLocation == onboarding || 
+              state.matchedLocation == login) {
+            return home;
+          }
+          return null; // Allow navigation to other authenticated routes
+        }
+        
+        // If not authenticated and not on auth screens, redirect to onboarding
+        if (!isAuthenticated && 
+            state.matchedLocation != splash &&
+            state.matchedLocation != onboarding && 
+            state.matchedLocation != login) {
+          return onboarding;
+        }
+        
+        // If on splash and initialized but not authenticated, go to onboarding
+        if (state.matchedLocation == splash && isInitialized && !isAuthenticated) {
+          return onboarding;
+        }
+        
+        return null; // No redirect needed
+      } catch (e) {
+        debugPrint('Router redirect error: $e');
+        return splash; // Safe fallback
+      }
+    },
     routes: [
       GoRoute(
         path: splash,
@@ -60,7 +108,7 @@ class AppRoutes {
         path: eventDetails,
         name: 'eventDetails',
         builder: (context, state) {
-          final eventId = state.pathParameters['eventId']!;
+          final eventId = state.pathParameters['eventId'] ?? '';
           return EventDetailsScreen(eventId: eventId);
         },
       ),
@@ -73,51 +121,42 @@ class AppRoutes {
         path: editEvent,
         name: 'editEvent',
         builder: (context, state) {
-          final eventId = state.pathParameters['eventId']!;
+          final eventId = state.pathParameters['eventId'] ?? '';
           return EditEventScreen(eventId: eventId);
         },
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(
-        child: Text(
-          'Page not found: ${state.error}',
-          style: const TextStyle(fontSize: 18),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error, size: 64, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(
+              'Page not found',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 8),
+            Text('${state.error}'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => context.go(splash),
+              child: const Text('Go Home'),
+            ),
+          ],
         ),
       ),
     ),
   );
 
   // Navigation helper methods
-  static void goToHome(BuildContext context) {
-    context.go(home);
-  }
-
-  static void goToLogin(BuildContext context) {
-    context.go(login);
-  }
-
-  static void goToOnboarding(BuildContext context) {
-    context.go(onboarding);
-  }
-
-  static void goToProfile(BuildContext context) {
-    context.push(profile);
-  }
-
-  static void goToNotifications(BuildContext context) {
-    context.push(notifications);
-  }
-
-  static void goToEventDetails(BuildContext context, String eventId) {
-    context.push('/event/$eventId');
-  }
-
-  static void goToCreateEvent(BuildContext context) {
-    context.push(createEvent);
-  }
-
-  static void goToEditEvent(BuildContext context, String eventId) {
-    context.push('/edit-event/$eventId');
-  }
+  static void goToHome(BuildContext context) => context.go(home);
+  static void goToLogin(BuildContext context) => context.go(login);
+  static void goToOnboarding(BuildContext context) => context.go(onboarding);
+  static void goToProfile(BuildContext context) => context.push(profile);
+  static void goToNotifications(BuildContext context) => context.push(notifications);
+  static void goToEventDetails(BuildContext context, String eventId) => context.push('/event/$eventId');
+  static void goToCreateEvent(BuildContext context) => context.push(createEvent);
+  static void goToEditEvent(BuildContext context, String eventId) => context.push('/edit-event/$eventId');
 }

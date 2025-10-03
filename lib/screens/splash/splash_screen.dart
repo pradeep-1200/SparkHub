@@ -19,11 +19,12 @@ class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
   late AnimationController _logoController;
   late AnimationController _textController;
-  
   late Animation<double> _logoScale;
   late Animation<double> _logoRotation;
   late Animation<Offset> _textSlide;
   late Animation<double> _textOpacity;
+
+  bool _hasNavigated = false;
 
   @override
   void initState() {
@@ -38,7 +39,7 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-
+    
     _logoScale = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -46,7 +47,7 @@ class _SplashScreenState extends State<SplashScreen>
       parent: _logoController,
       curve: Curves.elasticOut,
     ));
-
+    
     _logoRotation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -60,7 +61,7 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-
+    
     _textSlide = Tween<Offset>(
       begin: const Offset(0, 1),
       end: Offset.zero,
@@ -68,7 +69,7 @@ class _SplashScreenState extends State<SplashScreen>
       parent: _textController,
       curve: Curves.easeOutCubic,
     ));
-
+    
     _textOpacity = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -92,23 +93,104 @@ class _SplashScreenState extends State<SplashScreen>
     
     // Start text animation with slight delay
     await Future.delayed(const Duration(milliseconds: 500));
-    _textController.forward();
+    if (mounted) {
+      _textController.forward();
+    }
     
-    // Wait and check authentication status
-    await Future.delayed(const Duration(milliseconds: 2000));
+    // Wait for animations to mostly complete
+    await Future.delayed(const Duration(milliseconds: 1500));
+    
+    // Start checking auth status
     if (mounted) {
       _checkAuthAndNavigate();
     }
   }
 
-  void _checkAuthAndNavigate() {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  void _checkAuthAndNavigate() async {
+    if (_hasNavigated) return;
+
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      
+      debugPrint('🔍 Splash: Checking auth status...');
+      debugPrint('🔍 Splash: isInitialized = ${authProvider.isInitialized}');
+      debugPrint('🔍 Splash: isAuthenticated = ${authProvider.isAuthenticated}');
+      
+      // If already initialized, navigate immediately
+      if (authProvider.isInitialized) {
+        _performNavigation(authProvider);
+        return;
+      }
+
+      // Wait for initialization with a reasonable timeout
+      int attempts = 0;
+      const maxAttempts = 30; // 3 seconds total (100ms * 30)
+      
+      while (!authProvider.isInitialized && attempts < maxAttempts && mounted) {
+        await Future.delayed(const Duration(milliseconds: 100));
+        attempts++;
+        
+        if (authProvider.isInitialized) {
+          debugPrint('✅ Splash: Auth initialized after ${attempts * 100}ms');
+          break;
+        }
+      }
+
+      if (!mounted) return;
+
+      if (!authProvider.isInitialized) {
+        debugPrint('⚠️ Splash: Timeout waiting for auth initialization');
+        // Force initialization if it's taking too long
+        authProvider.forceInitialization();
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+
+      _performNavigation(authProvider);
+      
+    } catch (e) {
+      debugPrint('❌ Splash: Error during auth check: $e');
+      if (mounted) {
+        // On error, navigate to onboarding as safe fallback
+        _navigateTo(AppRoutes.onboarding);
+      }
+    }
+  }
+
+  void _performNavigation(AuthProvider authProvider) {
+    if (_hasNavigated || !mounted) return;
+
+    debugPrint('🚀 Splash: Performing navigation...');
+    debugPrint('🚀 Splash: isAuthenticated = ${authProvider.isAuthenticated}');
     
-    // Check if user is authenticated
-    if (authProvider.isAuthenticated) {
-      AppRoutes.goToHome(context);
-    } else {
-      AppRoutes.goToOnboarding(context);
+    setState(() {
+      _hasNavigated = true;
+    });
+
+    // Small delay for smooth visual transition
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      
+      if (authProvider.isAuthenticated) {
+        debugPrint('✅ Splash: Navigating to Home');
+        _navigateTo(AppRoutes.home);
+      } else {
+        debugPrint('✅ Splash: Navigating to Onboarding');
+        _navigateTo(AppRoutes.onboarding);
+      }
+    });
+  }
+
+  void _navigateTo(String route) {
+    if (!mounted) return;
+    
+    try {
+      if (route == AppRoutes.home) {
+        AppRoutes.goToHome(context);
+      } else {
+        AppRoutes.goToOnboarding(context);
+      }
+    } catch (e) {
+      debugPrint('❌ Splash: Navigation error: $e');
     }
   }
 
@@ -174,7 +256,7 @@ class _SplashScreenState extends State<SplashScreen>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ).createShader(bounds),
-                  child: Icon(
+                  child: const Icon(
                     Icons.celebration,
                     size: 60,
                     color: AppColors.white,
@@ -217,6 +299,8 @@ class _SplashScreenState extends State<SplashScreen>
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppDimensions.spaceLG),
+                
+                // Loading indicator
                 SizedBox(
                   width: 40,
                   height: 40,

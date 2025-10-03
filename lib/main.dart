@@ -4,7 +4,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'providers/event_provider.dart';
@@ -19,22 +18,22 @@ import 'services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  
   try {
     // Initialize Firebase
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-
+    
     // Enable Crashlytics
     FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-
+    
     // Initialize error handling
     ErrorHandler.initialize();
-
+    
     // Initialize notifications
-    await NotificationService().initialize();
-
+    await NotificationService.instance.initialize();
+    
     // System UI setup
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
@@ -44,18 +43,19 @@ Future<void> main() async {
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
     );
-
+    
     // Orientation lock
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
-
+    
     // Performance optimizations
     PerformanceHelper.optimizeMemory();
+    
   } catch (e, st) {
     debugPrint("🔥 Firebase init error: $e\n$st");
   }
-
+  
   runApp(const SparkHubApp());
 }
 
@@ -84,75 +84,8 @@ class SparkHubApp extends StatelessWidget {
           textTheme: GoogleFonts.poppinsTextTheme(),
           visualDensity: VisualDensity.adaptivePlatformDensity,
           splashFactory: InkRipple.splashFactory,
-          pageTransitionsTheme: const PageTransitionsTheme(
-            builders: {
-              TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-              TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-            },
-          ),
         ),
         routerConfig: AppRoutes.router,
-        builder: (context, child) {
-          // Global error boundary
-          ErrorWidget.builder = (FlutterErrorDetails details) {
-            return ErrorBoundary(error: details);
-          };
-          return child!;
-        },
-      ),
-    );
-  }
-}
-
-class ErrorBoundary extends StatelessWidget {
-  final FlutterErrorDetails error;
-
-  const ErrorBoundary({Key? key, required this.error}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.white,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: AppColors.error,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Oops! Something went wrong',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'We\'re working to fix this issue.\nPlease restart the app.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: () => SystemNavigator.pop(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.white,
-                ),
-                child: const Text('Restart App'),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

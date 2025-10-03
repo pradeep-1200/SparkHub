@@ -5,6 +5,10 @@ import '../models/badge_model.dart';
 
 class FirestoreService {
   static final FirestoreService _instance = FirestoreService._internal();
+  
+  // Added instance getter
+  static FirestoreService get instance => _instance;
+  
   factory FirestoreService() => _instance;
   FirestoreService._internal();
 
